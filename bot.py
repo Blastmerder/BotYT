@@ -3,7 +3,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 import os
 from download import *
 
-BOT_TOKEN = "7744640850:AAHWd1JLfF61_fLe8nPeD-IUZaPvfUvr5Qk"
+BOT_TOKEN = "YOUR TOCKEN"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Привет! Я эхо-бот. Напиши что-нибудь, и я повторю!\nИспользуй /audio для получения музыки")
