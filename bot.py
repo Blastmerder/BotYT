@@ -2,20 +2,65 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 import os
 from download import *
+import shutil
+import re
+import asyncio
 
-BOT_TOKEN = "YOUR TOCKEN"
+last = ""
+
+
+def clear_folder(folder_path):
+    for filename in os.listdir(folder_path):
+        file_path = os.path.join(folder_path, filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)  # Удаляет файл или ссылку
+            elif os.path.isdir(file_path):
+                os.rmdir(file_path)  # Удаляет пустую папку
+        except Exception as e:
+            print(f'Не удалось удалить {file_path}. Причина: {e}')
+clear_folder('./cash')
+
+BOT_TOKEN = "7744640850:AAHWd1JLfF61_fLe8nPeD-IUZaPvfUvr5Qk"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Привет! Я эхо-бот. Напиши что-нибудь, и я повторю!\nИспользуй /audio для получения музыки")
 
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_text = update.message.text
+    url = update.message.text
     await update.message.reply_text(f"Начинаем скачивание!")
 
-    if os.path.exists():                               
+    loop = asyncio.get_event_loop()
+    mp3_file = await loop.run_in_executor(None, download_music, url)
+
+    await update.message.reply_text(f"Отправляем файл")
+
+    if os.path.exists(mp3_file):
+        print("File found.")
+
         await context.bot.send_audio(
-                chat_id=update.effective_chat.id,                           audio=open(AUDIO_PATH, 'rb'),
-                title="Пример аудио",                                       performer="Мой бот"                                     )
+                chat_id=update.effective_chat.id,
+                audio=open(mp3_file, 'rb'),
+                read_timeout=180,
+                write_timeout=180
+            )
+
+
+def download_music(url):
+    data = get_data(url)
+
+    title = re.sub(r'[\\/*?,:"<>|]', '', data['title'])
+    title = re.sub(r'\s+', '_', title)
+    mp3_file = f"./cash/{title}.mp3"
+    last = mp3_file
+
+    download_audio(url, "./cash/", title)
+    thumbnail = get_thumbnail(data["thumbnail_url"])
+    set_metadata(mp3_file, data["title"], data["author"], thumbnail)
+
+    os.remove(thumbnail)
+
+    return mp3_file 
 
 # Новая функция для отправки аудио
 async def send_audio(update: Update, context: ContextTypes.DEFAULT_TYPE):

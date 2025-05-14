@@ -1,78 +1,3 @@
-from pytubefix import YouTube
-from mutagen.mp3 import MP3
-from mutagen.id3 import ID3, APIC, TIT2, TPE1, TALB
-from pydub import AudioSegment
-import requests
-import os
-import re
-from PIL import Image
-
-
-# установка аудио
-
-def download_audio(yt, output_path='.'):
-    """Скачивание и конвертация аудио с использованием pydub"""
-    audio_stream = yt.streams.filter(only_audio=True, file_extension='mp4').order_by('abr').desc().first()
-    temp_file = audio_stream.download(output_path=output_path)
-    
-    # Конвертация в MP3 с настройками качества
-    mp3_file = os.path.splitext(temp_file)[0] + '.mp3'
-    AudioSegment.from_file(temp_file).export(
-        mp3_file,
-        format='mp3',
-        bitrate='192k',
-        tags={
-            'title': yt.title,
-            'artist': yt.author
-        }
-    )
-    
-    os.remove(temp_file)
-    return mp3_file
-
-def process_thumbnail(image_path, output_size=800, threshold=15):
-    """Точное удаление чёрных полос и создание квадратного изображения"""
-    img = Image.open(image_path).convert("RGB")
-    pixels = img.load()
-    width, height = img.size
-    
-    # Поиск верхней границы контента
-    top = 0
-    for y in range(height):
-        row_sum = sum(pixels[x, y][0] + pixels[x, y][1] + pixels[x, y][2] for x in range(width))
-        if row_sum / (width * 3) > threshold:
-            top = y
-            break
-            
-    # Поиск нижней границы контента
-    bottom = height - 1
-    for y in reversed(range(height)):
-        row_sum = sum(pixels[x, y][0] + pixels[x, y][1] + pixels[x, y][2] for x in range(width))
-        if row_sum / (width * 3) > threshold:
-            bottom = y
-            break
-    
-    # Обрезка чёрных полос
-    if top > 0 or bottom < height - 1:
-        img = img.crop((0, top, width, bottom + 1))
-    
-    # Центральная квадратная обрезка
-    width, height = img.size
-    size = min(width, height)
-    left = (width - size) // 2
-    top_crop = (height - size) // 2
-    img = img.crop((left, top_crop, left + size, top_crop + size))
-    
-    # Финальный ресайз
-    img = img.resize((output_size, output_size), Image.Resampling.LANCZOS)
-    img.save(image_path, "JPEG", quality=95, optimize=True, progressive=True)
-    return image_path
-
-def get_thumbnail(yt, filename='thumbnail.jpg'):
-    """Скачивание и обработка превью"""
-    thumbnail_url = yt.thumbnail_url.replace('default.jpg', 'maxresdefault.jpg')
-    response = requests.get(thumbnail_url)
-    
 import yt_dlp
 from mutagen.mp3 import MP3
 from mutagen.id3 import ID3, APIC, TIT2, TPE1, TALB
@@ -85,11 +10,11 @@ from PIL import Image
 
 # установка аудио
 
-def download_audio(url, output_path='./'):
+def download_audio(url, output_path='./', name=''):
     # Настройки для аудио                                   
     options = {                                                     'format': 'bestaudio/best',
         'postprocessors': [{
-        'key': 'FFmpegExtractAudio',                                'preferredcodec': 'mp3',                                    'preferredquality': '256',                              }],                                                         'outtmpl': f'{output_path}%(title)s.%(ext)s',
+        'key': 'FFmpegExtractAudio',                                'preferredcodec': 'mp3',                                    'preferredquality': '256',                              }],                                                         'outtmpl': f'{output_path}{name}',
     }                                                                                                                   
     # Скачивание
 
@@ -174,6 +99,14 @@ def get_thumbnail(url, filename='thumbnail.jpg'):
         thumbnail_url = yt.thumbnail_url
         response = requests.get(url)
 
+
+def get_thumbnail(url, filename='thumbnail.jpg'):
+    response = requests.get(url) 
+    if response.status_code != 200:
+        thumbnail_url = yt.thumbnail_url
+        response = requests.get(url)
+    
+
     with open(filename, 'wb') as f:
         f.write(response.content)
 
@@ -236,6 +169,10 @@ if __name__ == "__main__":
         set_metadata(mp3_file, data["title"], data["author"], thumbnail)
         os.remove(thumbnail)
 
+        
+        set_metadata(mp3_file, data["title"], data["author"], thumbnail)
+        os.remove(thumbnail)
+        
 
     except Exception as e:
         print(f"\nОшибка: {str(e)}")
