@@ -1,6 +1,7 @@
 # How to install
 for install you need python, and uv, or pip for installing uv.
 
+# For linux
 ## First steps
 ### check baze
 
@@ -22,7 +23,12 @@ pip install uv
 
 ## Second step
 
-run the install.sh file, for installing dependensys, yiu can do this by
+copy rep into folder for project
+```bash
+git clone 
+```
+
+run the install.sh file, for installing dependensys, you can do this by
 ```bash
 sh install.sh
 ```
@@ -37,3 +43,7 @@ or
 ```bash
 uv run bot.py
 ```
+
+# For android
+
+all steps what for linux, but on app termux.
