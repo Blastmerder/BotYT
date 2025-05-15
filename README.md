@@ -25,7 +25,7 @@ pip install uv
 
 copy rep into folder for project
 ```bash
-git clone 
+git clone https://github.com/Blastmerder/BotYT
 ```
 
 run the install.sh file, for installing dependensys, you can do this by
