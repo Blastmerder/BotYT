@@ -25,7 +25,6 @@ clear_folder('./cash')
 with open('token.json', 'r', encoding='UTF-8') as token:
     BOT_TOKEN = json.load(token)["token"]
 
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Привет! Я эхо-бот. Напиши что-нибудь, и я повторю!\nИспользуй /audio для получения музыки")
 
